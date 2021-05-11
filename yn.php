@@ -43,6 +43,7 @@ new class {
     //YouTube API v3
     private const API_KEY = 'aaa';
     private const JSON_FLAGS = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
+    private const WEEK_ARRAY = ['日', '月', '火', '水', '木', '金', '土',];
 
     /**
      * constructor.
@@ -84,7 +85,9 @@ new class {
         $videoUrl = $this->urlGenerate(self::VIDEO_URL_BASE, self::VIDEO_PARAM, [$videoId, self::API_KEY,]);
         $getJson = file_get_contents($videoUrl);
         $getArray = json_decode($getJson, self::JSON_FLAGS);
-        return date('Y-m-d H:i:s', strtotime($getArray['items'][0]['liveStreamingDetails']['scheduledStartTime'] ?? ''));
+        $time = strtotime($getArray['items'][0]['liveStreamingDetails']['scheduledStartTime'] ?? '');
+        $weekName = self::WEEK_ARRAY[date('w', $time)];
+        return date("Y/m/d({$weekName}) H:i", $time);
     }
 
     /**
