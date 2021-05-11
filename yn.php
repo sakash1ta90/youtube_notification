@@ -50,6 +50,7 @@ new class {
      */
     public function __construct()
     {
+        date_default_timezone_set('Asia/Tokyo');
         foreach (self::CHANNEL_IDS as $channelId) {
             $searchUrl = $this->urlGenerate(self::SEARCH_URL_BASE, self::SEARCH_PARAM, [self::API_KEY, $channelId,]);
             $result = file_get_contents($searchUrl);
@@ -83,7 +84,7 @@ new class {
         $videoUrl = $this->urlGenerate(self::VIDEO_URL_BASE, self::VIDEO_PARAM, [$videoId, self::API_KEY,]);
         $getJson = file_get_contents($videoUrl);
         $getArray = json_decode($getJson, self::JSON_FLAGS);
-        return $getArray['items'][0]['liveStreamingDetails']['scheduledStartTime'] ?? '';
+        return date('Y-m-d H:i:s', strtotime($getArray['items'][0]['liveStreamingDetails']['scheduledStartTime'] ?? ''));
     }
 
     /**
