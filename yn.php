@@ -8,16 +8,16 @@ new class {
      * 通知したいチャンネルのID
      */
     private const CHANNEL_IDS = [
-        'UCQ0UDLQCjY0rmuxCDE38FGg',
-        'UCdn5BQ06XqgXoAxIhbqw5Rg',
-        'UCZlDXzGoo7d44bwdNObFacg',
-        'UChAnqc_AY5_I3Px5dig3X1Q',
-        'UCCzUftO8KOVkV4wQG1vkUvg',
-        'UCvaTdHTWBGv3MKj3KVqJVCw',
-        'UCvzGlP9oQwU--Y0r9id_jnA',
-        'UC1DCedRgGHBdm81E1llLhOQ',
-        'UCp-5t9SrOQwXMU7iIjQfARg',
-        'UCdyqAaZDKHXg4Ahi7VENThQ',
+        'UCQ0UDLQCjY0rmuxCDE38FGg', // 夏色まつり
+        'UCdn5BQ06XqgXoAxIhbqw5Rg', // 白上フブキ
+        'UCZlDXzGoo7d44bwdNObFacg', // 天音かなた
+        'UChAnqc_AY5_I3Px5dig3X1Q', // 戌神ころね
+        'UCCzUftO8KOVkV4wQG1vkUvg', // 宝鐘マリン
+        'UCvaTdHTWBGv3MKj3KVqJVCw', // 猫又おかゆ
+        'UCvzGlP9oQwU--Y0r9id_jnA', // 大空スバル
+        'UC1DCedRgGHBdm81E1llLhOQ', // 兎田ぺこら
+        'UCp-5t9SrOQwXMU7iIjQfARg', // 大神ミオ
+        'UCdyqAaZDKHXg4Ahi7VENThQ', // 白銀ノエル
     ];
     private const SEARCH_URL_BASE = 'https://www.googleapis.com/youtube/v3/search';
     private const SEARCH_PARAM = [
