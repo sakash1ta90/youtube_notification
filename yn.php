@@ -27,6 +27,7 @@ new class {
         'channelId' => '%s',
         'order' => 'date',
         'eventType' => 'upcoming',
+        'publishedAfter' => '%s',
     ];
     private const VIDEO_URL_BASE = 'https://www.googleapis.com/youtube/v3/videos';
     private const VIDEO_PARAM = [
@@ -51,9 +52,10 @@ new class {
      */
     public function __construct()
     {
+        $publishedAfter = $this->getUnix2utc(strtotime('-1 week'));
         date_default_timezone_set('Asia/Tokyo');
         foreach (self::CHANNEL_IDS as $channelId) {
-            $searchUrl = $this->urlGenerate(self::SEARCH_URL_BASE, self::SEARCH_PARAM, [self::API_KEY, $channelId,]);
+            $searchUrl = $this->urlGenerate(self::SEARCH_URL_BASE, self::SEARCH_PARAM, [self::API_KEY, $channelId, $publishedAfter,]);
             $result = file_get_contents($searchUrl);
             if (false === $result || null === $result) {
                 continue;
@@ -134,5 +136,14 @@ new class {
             $query .= sprintf('%s=%s%s', $key, $baseParam, $last !== $key ? '&' : '');
         }
         return sprintf($baseUrl . $query, ...$add);
+    }
+
+    /**
+     * @param string $unixTime
+     * @return string
+     */
+    private function getUnix2utc(string $unixTime): string
+    {
+        return gmdate('Y-m-d', $unixTime) . 'T' . gmdate('H:i:s', $unixTime) . 'Z';
     }
 };
