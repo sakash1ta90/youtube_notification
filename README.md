@@ -1,4 +1,6 @@
 # youtube_notification
+好きなYoutuberの配信予定を通知する
+
 ## YouTube Data API
 https://qiita.com/TRO555/items/677606b5e2c026cf4838  
 取得したものを `API_KEY` に設定する  
