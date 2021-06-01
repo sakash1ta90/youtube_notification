@@ -41,10 +41,12 @@ new class {
      * SlackのWebhookURL
      */
     private const SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/xxx/yyy/zzz';
+    private const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/xxx/yyy';
     //YouTube API v3
     private const API_KEY = 'aaa';
     private const JSON_FLAGS = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
     private const WEEK_ARRAY = ['日', '月', '火', '水', '木', '金', '土',];
+    private int|false $now;
 
     /**
      * constructor.
@@ -52,8 +54,10 @@ new class {
      */
     public function __construct()
     {
+        $this->now = strtotime('now');
         $publishedAfter = $this->getUnix2utc(strtotime('-1 week'));
         date_default_timezone_set('Asia/Tokyo');
+        $skipCount = 0;
         foreach (self::CHANNEL_IDS as $channelId) {
             $searchUrl = $this->urlGenerate(self::SEARCH_URL_BASE, self::SEARCH_PARAM, [self::API_KEY, $channelId, $publishedAfter,]);
             $result = file_get_contents($searchUrl);
@@ -62,17 +66,42 @@ new class {
             }
             ['items' => $items] = json_decode($result, true);
             foreach ($items as $item) {
+                $startTime = $this->getStartTime($item['id']['videoId']);
+                if (false === $startTime) {
+                    echo '.';
+                    ++$skipCount;
+                    continue;
+                }
                 // Slackに通知する
-                $this->sendSlack([
-                    'pretext' => $item['snippet']['channelTitle'],
-                    'text' => "{$this->getStartTime($item['id']['videoId'])}\n{$item['snippet']['description']}",
-                    'fallback' => $item['snippet']['title'],
-                    'color' => 'good',
-                    'title' => $item['snippet']['title'],
-                    'title_link' => sprintf(self::LINK_URL_BASE, $item['id']['videoId']),
-                    'image_url' => $item['snippet']['thumbnails']['medium']['url'],
+//                $this->sendSlack([
+//                    'pretext' => $item['snippet']['channelTitle'],
+//                    'text' => "{$startTime}\n{$item['snippet']['description']}",
+//                    'fallback' => $item['snippet']['title'],
+//                    'color' => 'good',
+//                    'title' => $item['snippet']['title'],
+//                    'title_link' => sprintf(self::LINK_URL_BASE, $item['id']['videoId']),
+//                    'image_url' => $item['snippet']['thumbnails']['medium']['url'],
+//                ]);
+
+                $this->sendDiscord([
+                    'content' => $item['snippet']['channelTitle'],
+                    'embeds' => [
+                        [
+                            'title' => $item['snippet']['channelTitle'],
+                            'description' => "{$startTime}\n{$item['snippet']['description']}",
+                            'url' => sprintf(self::LINK_URL_BASE, $item['id']['videoId']),
+                            'color' => 0000000,
+                            'image' => [
+                                'url' => $item['snippet']['thumbnails']['medium']['url'],
+                            ],
+                        ],
+                    ],
                 ]);
             }
+        }
+        echo $skipCount,PHP_EOL;
+        if (0 < $skipCount) {
+            $this->sendDiscord(['content' => sprintf('%s件スキップしますた', $skipCount),]);
         }
     }
 
@@ -82,14 +111,40 @@ new class {
      * @param string $videoId
      * @return string
      */
-    private function getStartTime(string $videoId): string
+    private function getStartTime(string $videoId): string|bool
     {
         $videoUrl = $this->urlGenerate(self::VIDEO_URL_BASE, self::VIDEO_PARAM, [$videoId, self::API_KEY,]);
         $getJson = file_get_contents($videoUrl);
         $getArray = json_decode($getJson, self::JSON_FLAGS);
         $time = strtotime($getArray['items'][0]['liveStreamingDetails']['scheduledStartTime'] ?? '');
+        if ($time < $this->now) {
+            return false;
+        }
+
         $weekName = self::WEEK_ARRAY[date('w', $time)];
         return date("Y/m/d({$weekName}) H:i", $time);
+    }
+
+    private function sendDiscord(array $jsonInner): void
+    {
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL => self::DISCORD_WEBHOOK_URL,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => json_encode($jsonInner, JSON_UNESCAPED_UNICODE),
+            CURLOPT_HTTPHEADER => [
+                'Content-type: application/json'
+            ],
+        ]);
+        $result = curl_exec($curl);
+        curl_close($curl);
+        echo $result, PHP_EOL;
     }
 
     /**
