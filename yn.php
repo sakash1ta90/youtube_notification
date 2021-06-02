@@ -28,6 +28,10 @@ new class {
         'UCK9V2B22uJYu3N7eR_BT9QA', // 尾丸ポルカ
         'UCAoy6rzhSf4ydcYjJw3WoVg', // アイラニ・イオフィフティーン
     ];
+
+    /**
+     * YoutubeAPI 一覧
+     */
     private const SEARCH_URL_BASE = 'https://www.googleapis.com/youtube/v3/search';
 
     // https://developers.google.com/youtube/v3/docs/search/list?hl=ja
@@ -40,12 +44,20 @@ new class {
         'eventType' => 'upcoming',
         'publishedAfter' => '%s',
     ];
+
+    /**
+     * YoutubeAPI 動画詳細
+     */
     private const VIDEO_URL_BASE = 'https://www.googleapis.com/youtube/v3/videos';
     private const VIDEO_PARAM = [
         'part' => 'liveStreamingDetails',
         'id' => '%s',
         'key' => '%s',
     ];
+
+    /**
+     * Youtubeの動画リンク
+     */
     private const LINK_URL_BASE = 'https://www.youtube.com/watch?v=%s';
 
     /**
@@ -58,24 +70,26 @@ new class {
     private const JSON_FLAGS = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
     private const WEEK_ARRAY = ['日', '月', '火', '水', '木', '金', '土',];
     private int|false $now;
-    /**
-     * @var int 1:slack, 2:discord
-     */
-    private int $mode = 2;
 
     /**
-     * constructor.
+     *  constructor.
+     * @param int $mode 1:slack, 2:discord
      */
-    public function __construct()
+    public function __construct(private int $mode = 2)
     {
         $this->now = strtotime('now');
         $publishedAfter = $this->getUnix2utc(strtotime('-1 week'));
         date_default_timezone_set('Asia/Tokyo');
         $skipCount = 0;
         $count = 0;
+
+        // チャンネルごとにAPIを叩く
         foreach (self::CHANNEL_IDS as $channelId) {
+            // 一覧API
             $searchUrl = $this->urlGenerate(self::SEARCH_URL_BASE, self::SEARCH_PARAM, [self::API_KEY, $channelId, $publishedAfter,]);
             $result = file_get_contents($searchUrl);
+
+            // 結果が不正だった場合弾く
             if (false === $result || null === $result) {
                 continue;
             }
@@ -88,6 +102,7 @@ new class {
                     continue;
                 }
                 match ($this->mode) {
+                    // Slackに通知する
                     1 => $this->postCurl(self::SLACK_WEBHOOK_URL, json_encode([
                         'attachments' => [
                             [
@@ -101,6 +116,7 @@ new class {
                             ],
                         ],
                     ], JSON_UNESCAPED_UNICODE)),
+                    // discordに通知する
                     2 => $this->postCurl(self::DISCORD_WEBHOOK_URL, json_encode([
                         'content' => $item['snippet']['channelTitle'],
                         'embeds' => [
@@ -116,10 +132,10 @@ new class {
                         ],
                     ], JSON_UNESCAPED_UNICODE)),
                 };
-                // Slackに通知する
-                // discordに通知する
             }
         }
+
+        // スキップした投稿がある場合、通知する
         if (0 < $skipCount) {
             $json = ['content' => sprintf('%s件中%s件スキップしますた', $count, $skipCount),];
             $this->postCurl(self::DISCORD_WEBHOOK_URL, json_encode($json, JSON_UNESCAPED_UNICODE));
@@ -130,10 +146,11 @@ new class {
      * 配信開始時刻の取得
      *
      * @param string $videoId
-     * @return string|bool
+     * @return string|bool フォーマット後の文字列
      */
     private function getStartTime(string $videoId): string|bool
     {
+        // 動画詳細
         $videoUrl = $this->urlGenerate(self::VIDEO_URL_BASE, self::VIDEO_PARAM, [$videoId, self::API_KEY,]);
         $getJson = file_get_contents($videoUrl);
         $getArray = json_decode($getJson, self::JSON_FLAGS);
@@ -194,6 +211,8 @@ new class {
     }
 
     /**
+     * UTC変換
+     *
      * @param string $unixTime
      * @return string
      */
