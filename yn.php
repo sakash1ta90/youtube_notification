@@ -49,10 +49,13 @@ new class {
     private const JSON_FLAGS = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
     private const WEEK_ARRAY = ['日', '月', '火', '水', '木', '金', '土',];
     private int|false $now;
+    /**
+     * @var int 1:slack, 2:discord
+     */
+    private int $mode = 2;
 
     /**
      * constructor.
-     *
      */
     public function __construct()
     {
@@ -72,40 +75,45 @@ new class {
                 $startTime = $this->getStartTime($item['id']['videoId']);
                 ++$count;
                 if (false === $startTime) {
-                    echo '.';
                     ++$skipCount;
                     continue;
                 }
-                // Slackに通知する
-//                $this->sendSlack([
-//                    'pretext' => $item['snippet']['channelTitle'],
-//                    'text' => "{$startTime}\n{$item['snippet']['description']}",
-//                    'fallback' => $item['snippet']['title'],
-//                    'color' => 'good',
-//                    'title' => $item['snippet']['title'],
-//                    'title_link' => sprintf(self::LINK_URL_BASE, $item['id']['videoId']),
-//                    'image_url' => $item['snippet']['thumbnails']['medium']['url'],
-//                ]);
-
-                $this->sendDiscord([
-                    'content' => $item['snippet']['channelTitle'],
-                    'embeds' => [
-                        [
-                            'title' => $item['snippet']['channelTitle'],
-                            'description' => "{$startTime}\n{$item['snippet']['description']}",
-                            'url' => sprintf(self::LINK_URL_BASE, $item['id']['videoId']),
-                            'color' => hexdec('FFFFFF'),
-                            'image' => [
-                                'url' => $item['snippet']['thumbnails']['medium']['url'],
+                match ($this->mode) {
+                    1 => $this->postCurl(self::SLACK_WEBHOOK_URL, json_encode([
+                        'attachments' => [
+                            [
+                                'pretext' => $item['snippet']['channelTitle'],
+                                'text' => "{$startTime}\n{$item['snippet']['description']}",
+                                'fallback' => $item['snippet']['title'],
+                                'color' => 'good',
+                                'title' => $item['snippet']['title'],
+                                'title_link' => sprintf(self::LINK_URL_BASE, $item['id']['videoId']),
+                                'image_url' => $item['snippet']['thumbnails']['medium']['url'],
                             ],
                         ],
-                    ],
-                ]);
+                    ], JSON_UNESCAPED_UNICODE)),
+                    2 => $this->postCurl(self::DISCORD_WEBHOOK_URL, json_encode([
+                        'content' => $item['snippet']['channelTitle'],
+                        'embeds' => [
+                            [
+                                'title' => $item['snippet']['channelTitle'],
+                                'description' => "{$startTime}\n{$item['snippet']['description']}",
+                                'url' => sprintf(self::LINK_URL_BASE, $item['id']['videoId']),
+                                'color' => hexdec('FFFFFF'),
+                                'image' => [
+                                    'url' => $item['snippet']['thumbnails']['medium']['url'],
+                                ],
+                            ],
+                        ],
+                    ], JSON_UNESCAPED_UNICODE)),
+                };
+                // Slackに通知する
+                // discordに通知する
             }
         }
-        echo $skipCount, PHP_EOL;
         if (0 < $skipCount) {
-            $this->sendDiscord(['content' => sprintf('%s件中%s件スキップしますた', $count, $skipCount),]);
+            $json = ['content' => sprintf('%s件中%s件スキップしますた', $count, $skipCount),];
+            $this->postCurl(self::DISCORD_WEBHOOK_URL, json_encode($json, JSON_UNESCAPED_UNICODE));
         }
     }
 
@@ -130,32 +138,13 @@ new class {
     }
 
     /**
-     * @param array $json
-     */
-    private function sendDiscord(array $json): void
-    {
-        $result = $this->postCurl(self::DISCORD_WEBHOOK_URL, json_encode($json, JSON_UNESCAPED_UNICODE));
-        echo $result, PHP_EOL;
-    }
-
-    /**
-     * Slack通知
-     * https://qiita.com/daikiojm/items/759ea40c00f9b539a4c8
+     * cURL共通処理
      *
-     * @param array $jsonInner Attachmentの中
-     * @return void
-     */
-    private function sendSlack(array $jsonInner): void
-    {
-        $this->postCurl(self::SLACK_WEBHOOK_URL, json_encode(['attachments' => [$jsonInner,],], JSON_UNESCAPED_UNICODE));
-    }
-
-    /**
      * @param string $url
      * @param string $json
-     * @return bool|string
+     * @return void
      */
-    private function postCurl(string $url, string $json): bool|string
+    private function postCurl(string $url, string $json): void
     {
         $curl = curl_init();
         curl_setopt_array($curl, [
@@ -174,7 +163,6 @@ new class {
         ]);
         $result = curl_exec($curl);
         curl_close($curl);
-        return $result;
     }
 
     /**
