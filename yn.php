@@ -96,7 +96,7 @@ new class {
                         'content' => $item['snippet']['channelTitle'],
                         'embeds' => [
                             [
-                                'title' => $item['snippet']['channelTitle'],
+                                'title' => $item['snippet']['title'],
                                 'description' => "{$startTime}\n{$item['snippet']['description']}",
                                 'url' => sprintf(self::LINK_URL_BASE, $item['id']['videoId']),
                                 'color' => hexdec('FFFFFF'),
