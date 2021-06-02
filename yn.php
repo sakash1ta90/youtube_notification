@@ -142,9 +142,9 @@ new class {
      *
      * @param string $url
      * @param string $json
-     * @return void
+     * @return bool|string
      */
-    private function postCurl(string $url, string $json): void
+    private function postCurl(string $url, string $json): bool|string
     {
         $curl = curl_init();
         curl_setopt_array($curl, [
@@ -163,6 +163,7 @@ new class {
         ]);
         $result = curl_exec($curl);
         curl_close($curl);
+        return $result;
     }
 
     /**
