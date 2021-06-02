@@ -8,16 +8,25 @@ new class {
      * 通知したいチャンネルのID
      */
     private const CHANNEL_IDS = [
-        'UCQ0UDLQCjY0rmuxCDE38FGg', // 夏色まつり
+        'UCJFZiqLMntJufDCHc6bQixg', // hololive ホロライブ - VTuber Group
         'UCdn5BQ06XqgXoAxIhbqw5Rg', // 白上フブキ
-        'UCZlDXzGoo7d44bwdNObFacg', // 天音かなた
-        'UChAnqc_AY5_I3Px5dig3X1Q', // 戌神ころね
-        'UCCzUftO8KOVkV4wQG1vkUvg', // 宝鐘マリン
-        'UCvaTdHTWBGv3MKj3KVqJVCw', // 猫又おかゆ
+        'UCQ0UDLQCjY0rmuxCDE38FGg', // 夏色まつり
+        'UC1opHUrw8rvnsadT-iGp7Cg', // 湊あくあ
+        'UC1suqwovbL1kzsoaZgFZLKg', // 癒月ちょこ
         'UCvzGlP9oQwU--Y0r9id_jnA', // 大空スバル
-        'UC1DCedRgGHBdm81E1llLhOQ', // 兎田ぺこら
         'UCp-5t9SrOQwXMU7iIjQfARg', // 大神ミオ
+        'UCvaTdHTWBGv3MKj3KVqJVCw', // 猫又おかゆ
+        'UChAnqc_AY5_I3Px5dig3X1Q', // 戌神ころね
+        'UCvInZx9h3jC2JzsIzoOebWg', // 不知火フレア
         'UCdyqAaZDKHXg4Ahi7VENThQ', // 白銀ノエル
+        'UCCzUftO8KOVkV4wQG1vkUvg', // 宝鐘マリン
+        'UC1DCedRgGHBdm81E1llLhOQ', // 兎田ぺこら
+        'UCl_gCybOJRIgOXw6Qb4qJzQ', // 潤羽るしあ
+        'UC5CwaMl1eIgY8h02uZw7u8A', // 星街すいせい
+        'UCZlDXzGoo7d44bwdNObFacg', // 天音かなた
+        'UCqm3BQLlJfvkTsX_hvm0UmA', // 角巻わため
+        'UCK9V2B22uJYu3N7eR_BT9QA', // 尾丸ポルカ
+        'UCAoy6rzhSf4ydcYjJw3WoVg', // アイラニ・イオフィフティーン
     ];
     private const SEARCH_URL_BASE = 'https://www.googleapis.com/youtube/v3/search';
 
