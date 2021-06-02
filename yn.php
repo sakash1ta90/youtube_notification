@@ -20,6 +20,8 @@ new class {
         'UCdyqAaZDKHXg4Ahi7VENThQ', // 白銀ノエル
     ];
     private const SEARCH_URL_BASE = 'https://www.googleapis.com/youtube/v3/search';
+
+    // https://developers.google.com/youtube/v3/docs/search/list?hl=ja
     private const SEARCH_PARAM = [
         'part' => 'snippet',
         'type' => 'video',
@@ -58,6 +60,7 @@ new class {
         $publishedAfter = $this->getUnix2utc(strtotime('-1 week'));
         date_default_timezone_set('Asia/Tokyo');
         $skipCount = 0;
+        $count = 0;
         foreach (self::CHANNEL_IDS as $channelId) {
             $searchUrl = $this->urlGenerate(self::SEARCH_URL_BASE, self::SEARCH_PARAM, [self::API_KEY, $channelId, $publishedAfter,]);
             $result = file_get_contents($searchUrl);
@@ -67,6 +70,7 @@ new class {
             ['items' => $items] = json_decode($result, true);
             foreach ($items as $item) {
                 $startTime = $this->getStartTime($item['id']['videoId']);
+                ++$count;
                 if (false === $startTime) {
                     echo '.';
                     ++$skipCount;
@@ -90,7 +94,7 @@ new class {
                             'title' => $item['snippet']['channelTitle'],
                             'description' => "{$startTime}\n{$item['snippet']['description']}",
                             'url' => sprintf(self::LINK_URL_BASE, $item['id']['videoId']),
-                            'color' => 0000000,
+                            'color' => hexdec('FFFFFF'),
                             'image' => [
                                 'url' => $item['snippet']['thumbnails']['medium']['url'],
                             ],
@@ -99,9 +103,9 @@ new class {
                 ]);
             }
         }
-        echo $skipCount,PHP_EOL;
+        echo $skipCount, PHP_EOL;
         if (0 < $skipCount) {
-            $this->sendDiscord(['content' => sprintf('%s件スキップしますた', $skipCount),]);
+            $this->sendDiscord(['content' => sprintf('%s件中%s件スキップしますた', $count, $skipCount),]);
         }
     }
 
@@ -109,7 +113,7 @@ new class {
      * 配信開始時刻の取得
      *
      * @param string $videoId
-     * @return string
+     * @return string|bool
      */
     private function getStartTime(string $videoId): string|bool
     {
@@ -125,25 +129,12 @@ new class {
         return date("Y/m/d({$weekName}) H:i", $time);
     }
 
-    private function sendDiscord(array $jsonInner): void
+    /**
+     * @param array $json
+     */
+    private function sendDiscord(array $json): void
     {
-        $curl = curl_init();
-        curl_setopt_array($curl, [
-            CURLOPT_URL => self::DISCORD_WEBHOOK_URL,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => json_encode($jsonInner, JSON_UNESCAPED_UNICODE),
-            CURLOPT_HTTPHEADER => [
-                'Content-type: application/json'
-            ],
-        ]);
-        $result = curl_exec($curl);
-        curl_close($curl);
+        $result = $this->postCurl(self::DISCORD_WEBHOOK_URL, json_encode($json, JSON_UNESCAPED_UNICODE));
         echo $result, PHP_EOL;
     }
 
@@ -156,9 +147,19 @@ new class {
      */
     private function sendSlack(array $jsonInner): void
     {
+        $this->postCurl(self::SLACK_WEBHOOK_URL, json_encode(['attachments' => [$jsonInner,],], JSON_UNESCAPED_UNICODE));
+    }
+
+    /**
+     * @param string $url
+     * @param string $json
+     * @return bool|string
+     */
+    private function postCurl(string $url, string $json): bool|string
+    {
         $curl = curl_init();
         curl_setopt_array($curl, [
-            CURLOPT_URL => self::SLACK_WEBHOOK_URL,
+            CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
@@ -166,13 +167,14 @@ new class {
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => json_encode(['attachments' => [$jsonInner,],], JSON_UNESCAPED_UNICODE),
+            CURLOPT_POSTFIELDS => $json,
             CURLOPT_HTTPHEADER => [
                 'Content-type: application/json'
             ],
         ]);
-        curl_exec($curl);
+        $result = curl_exec($curl);
         curl_close($curl);
+        return $result;
     }
 
     /**
