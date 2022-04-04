@@ -21,7 +21,6 @@ new class {
         'UCdyqAaZDKHXg4Ahi7VENThQ', // 白銀ノエル
         'UCCzUftO8KOVkV4wQG1vkUvg', // 宝鐘マリン
         'UC1DCedRgGHBdm81E1llLhOQ', // 兎田ぺこら
-        'UCl_gCybOJRIgOXw6Qb4qJzQ', // 潤羽るしあ
         'UC5CwaMl1eIgY8h02uZw7u8A', // 星街すいせい
         'UCZlDXzGoo7d44bwdNObFacg', // 天音かなた
         'UCqm3BQLlJfvkTsX_hvm0UmA', // 角巻わため
