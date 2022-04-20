@@ -39,4 +39,10 @@ class Config
 
     //YouTube API v3
     public const API_KEY = 'aaa';
+
+    public const JSON_FLAGS = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
+    public const WEEK_ARRAY = ['日', '月', '火', '水', '木', '金', '土',];
+
+    public const SKIP_NOTIFICATION_BASE = '%s件中%s件スキップしますた';
+    public const PRINT_DATE_FORMAT = 'Y/m/d(%s) H:i';
 }

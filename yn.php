@@ -40,8 +40,6 @@ new class {
      */
     private const LINK_URL_BASE = 'https://www.youtube.com/watch?v=%s';
 
-    private const JSON_FLAGS = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
-    private const WEEK_ARRAY = ['日', '月', '火', '水', '木', '金', '土',];
     private int|false $now;
 
     /**
@@ -112,7 +110,7 @@ new class {
 
         // スキップした投稿がある場合、通知する
         if (0 < $skipCount) {
-            $json = ['content' => sprintf('%s件中%s件スキップしますた', $count, $skipCount),];
+            $json = ['content' => sprintf(Config::SKIP_NOTIFICATION_BASE, $count, $skipCount),];
             $this->postCurl(Config::DISCORD_WEBHOOK_URL, json_encode($json, JSON_UNESCAPED_UNICODE));
         }
     }
@@ -128,14 +126,14 @@ new class {
         // 動画詳細
         $videoURL = $this->urlGenerate(self::VIDEO_URL_BASE, self::VIDEO_PARAM, [$videoId, Config::API_KEY,]);
         $getJSON = file_get_contents($videoURL);
-        $getArray = json_decode($getJSON, self::JSON_FLAGS);
+        $getArray = json_decode($getJSON, Config::JSON_FLAGS);
         $time = strtotime($getArray['items'][0]['liveStreamingDetails']['scheduledStartTime'] ?? '');
         if ($time < $this->now) {
             return false;
         }
 
-        $weekName = self::WEEK_ARRAY[date('w', $time)];
-        return date("Y/m/d({$weekName}) H:i", $time);
+        $weekName = Config::WEEK_ARRAY[date('w', $time)];
+        return date(sprintf(Config::PRINT_DATE_FORMAT, $weekName), $time);
     }
 
     /**
