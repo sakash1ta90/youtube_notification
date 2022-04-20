@@ -2,7 +2,7 @@
 好きなYoutuberの配信予定を通知する
 
 ## YouTube Data API
-https://tro555-engineer.com/2022/02/09/youtube-data-api%e3%81%ae%e5%a7%8b%e3%82%81%e6%96%b9/
+https://tro555-engineer.com/2022/02/09/youtube-data-api%e3%81%ae%e5%a7%8b%e3%82%81%e6%96%b9/  
 取得したものを `API_KEY` に設定する  
 https://github.com/sakash1ta90/youtube_notification/blob/0cfb9f92b49cd4b71f6ede3f9048597e89220661/yn.php#L44
 
