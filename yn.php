@@ -71,8 +71,8 @@ new class {
     private int|false $now;
 
     /**
-     *  constructor.
-     * @param int $mode 1:slack, 2:discord
+     * constructor.
+     * @param int $mode 1:slack, 2:discord, 3:LINE(未実装)
      */
     public function __construct(private int $mode = 2)
     {
@@ -130,6 +130,8 @@ new class {
                             ],
                         ],
                     ], JSON_UNESCAPED_UNICODE)),
+                    // TODO: LINEに通知する
+                    3 => null,
                 };
             }
         }
@@ -144,7 +146,7 @@ new class {
     /**
      * 配信開始時刻の取得
      *
-     * @param string $videoId
+     * @param string $videoId 一覧APIの結果 items.[].id.videoId
      * @return string|bool フォーマット後の文字列
      */
     private function getStartTime(string $videoId): string|bool
@@ -165,8 +167,8 @@ new class {
     /**
      * cURL共通処理
      *
-     * @param string $url
-     * @param string $json
+     * @param string $url URL
+     * @param string $json パラメータ
      * @return bool|string
      */
     private function postCurl(string $url, string $json): bool|string
@@ -212,8 +214,8 @@ new class {
     /**
      * UTC変換
      *
-     * @param string $unixTime
-     * @return string
+     * @param string $unixTime UnixTime
+     * @return string UTC
      */
     private function getUnix2utc(string $unixTime): string
     {
