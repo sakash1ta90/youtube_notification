@@ -1,33 +1,14 @@
 <?php
+spl_autoload_register(function (string $className) {
+    if (is_readable($file = sprintf('%s/%s.php', realpath(__DIR__), $className))) {
+        require_once $file;
+    }
+});
 
 /**
  * 配信予定一覧API
  */
 new class {
-    /**
-     * 通知したいチャンネルのID
-     */
-    private const CHANNEL_IDS = [
-        'UCJFZiqLMntJufDCHc6bQixg', // hololive ホロライブ - VTuber Group
-        'UCdn5BQ06XqgXoAxIhbqw5Rg', // 白上フブキ
-        'UCQ0UDLQCjY0rmuxCDE38FGg', // 夏色まつり
-        'UC1opHUrw8rvnsadT-iGp7Cg', // 湊あくあ
-        'UC1suqwovbL1kzsoaZgFZLKg', // 癒月ちょこ
-        'UCvzGlP9oQwU--Y0r9id_jnA', // 大空スバル
-        'UCp-5t9SrOQwXMU7iIjQfARg', // 大神ミオ
-        'UCvaTdHTWBGv3MKj3KVqJVCw', // 猫又おかゆ
-        'UChAnqc_AY5_I3Px5dig3X1Q', // 戌神ころね
-        'UCvInZx9h3jC2JzsIzoOebWg', // 不知火フレア
-        'UCdyqAaZDKHXg4Ahi7VENThQ', // 白銀ノエル
-        'UCCzUftO8KOVkV4wQG1vkUvg', // 宝鐘マリン
-        'UC1DCedRgGHBdm81E1llLhOQ', // 兎田ぺこら
-        'UC5CwaMl1eIgY8h02uZw7u8A', // 星街すいせい
-        'UCZlDXzGoo7d44bwdNObFacg', // 天音かなた
-        'UCqm3BQLlJfvkTsX_hvm0UmA', // 角巻わため
-        'UCK9V2B22uJYu3N7eR_BT9QA', // 尾丸ポルカ
-        'UCAoy6rzhSf4ydcYjJw3WoVg', // アイラニ・イオフィフティーン
-    ];
-
     /**
      * YoutubeAPI 一覧
      */
@@ -59,13 +40,6 @@ new class {
      */
     private const LINK_URL_BASE = 'https://www.youtube.com/watch?v=%s';
 
-    /**
-     * SlackのWebhookURL
-     */
-    private const SLACK_WEBHOOK_URL = 'https://hooks.slack.com/services/xxx/yyy/zzz';
-    private const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/xxx/yyy';
-    //YouTube API v3
-    private const API_KEY = 'aaa';
     private const JSON_FLAGS = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;
     private const WEEK_ARRAY = ['日', '月', '火', '水', '木', '金', '土',];
     private int|false $now;
@@ -83,13 +57,13 @@ new class {
         $count = 0;
 
         // チャンネルごとにAPIを叩く
-        foreach (self::CHANNEL_IDS as $channelId) {
+        foreach (Config::CHANNEL_IDS as $channelID) {
             // 一覧API
-            $searchUrl = $this->urlGenerate(self::SEARCH_URL_BASE, self::SEARCH_PARAM, [self::API_KEY, $channelId, $publishedAfter,]);
-            $result = file_get_contents($searchUrl);
+            $searchURL = $this->urlGenerate(self::SEARCH_URL_BASE, self::SEARCH_PARAM, [Config::API_KEY, $channelID, $publishedAfter,]);
+            $result = file_get_contents($searchURL);
 
             // 結果が不正だった場合弾く
-            if (false === $result || null === $result) {
+            if (false === $result) {
                 continue;
             }
             ['items' => $items] = json_decode($result, true);
@@ -102,7 +76,7 @@ new class {
                 }
                 match ($this->mode) {
                     // Slackに通知する
-                    1 => $this->postCurl(self::SLACK_WEBHOOK_URL, json_encode([
+                    1 => $this->postCurl(Config::SLACK_WEBHOOK_URL, json_encode([
                         'attachments' => [
                             [
                                 'pretext' => $item['snippet']['channelTitle'],
@@ -116,7 +90,7 @@ new class {
                         ],
                     ], JSON_UNESCAPED_UNICODE)),
                     // discordに通知する
-                    2 => $this->postCurl(self::DISCORD_WEBHOOK_URL, json_encode([
+                    2 => $this->postCurl(Config::DISCORD_WEBHOOK_URL, json_encode([
                         'content' => $item['snippet']['channelTitle'],
                         'embeds' => [
                             [
@@ -139,7 +113,7 @@ new class {
         // スキップした投稿がある場合、通知する
         if (0 < $skipCount) {
             $json = ['content' => sprintf('%s件中%s件スキップしますた', $count, $skipCount),];
-            $this->postCurl(self::DISCORD_WEBHOOK_URL, json_encode($json, JSON_UNESCAPED_UNICODE));
+            $this->postCurl(Config::DISCORD_WEBHOOK_URL, json_encode($json, JSON_UNESCAPED_UNICODE));
         }
     }
 
@@ -152,9 +126,9 @@ new class {
     private function getStartTime(string $videoId): string|bool
     {
         // 動画詳細
-        $videoUrl = $this->urlGenerate(self::VIDEO_URL_BASE, self::VIDEO_PARAM, [$videoId, self::API_KEY,]);
-        $getJson = file_get_contents($videoUrl);
-        $getArray = json_decode($getJson, self::JSON_FLAGS);
+        $videoURL = $this->urlGenerate(self::VIDEO_URL_BASE, self::VIDEO_PARAM, [$videoId, Config::API_KEY,]);
+        $getJSON = file_get_contents($videoURL);
+        $getArray = json_decode($getJSON, self::JSON_FLAGS);
         $time = strtotime($getArray['items'][0]['liveStreamingDetails']['scheduledStartTime'] ?? '');
         if ($time < $this->now) {
             return false;
@@ -196,17 +170,17 @@ new class {
     /**
      * URL生成
      *
-     * @param string $baseUrl 元のURL
+     * @param string $baseURL 元のURL
      * @param array $baseParams パラメタのKey-Value連想配列
      * @param array $add 外部から適用する変数
      * @return string 生成されたURL
      */
-    private function urlGenerate(string $baseUrl, array $baseParams, array $add): string
+    private function urlGenerate(string $baseURL, array $baseParams, array $add): string
     {
         foreach ($baseParams as $key => $baseParam) {
             $baseParams[$key] = $baseParam === '%s' ? sprintf($baseParam, array_shift($add)) : $baseParam;
         }
-        return sprintf('%s?%s', $baseUrl , http_build_query($baseParams));
+        return sprintf('%s?%s', $baseURL, http_build_query($baseParams));
     }
 
     /**
