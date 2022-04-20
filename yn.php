@@ -203,12 +203,10 @@ new class {
      */
     private function urlGenerate(string $baseUrl, array $baseParams, array $add): string
     {
-        $query = '?';
-        $last = array_key_last($baseParams);
         foreach ($baseParams as $key => $baseParam) {
-            $query .= sprintf('%s=%s%s', $key, $baseParam, $last !== $key ? '&' : '');
+            $baseParams[$key] = $baseParam === '%s' ? sprintf($baseParam, array_shift($add)) : $baseParam;
         }
-        return sprintf($baseUrl . $query, ...$add);
+        return sprintf('%s?%s', $baseUrl , http_build_query($baseParams));
     }
 
     /**
